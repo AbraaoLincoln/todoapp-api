@@ -13,3 +13,7 @@ func Warn(message string) {
 func Error(message string) {
 	log.Println("[ ERROR ]", message)
 }
+
+func FatalError(message string) {
+	log.Fatal("[ ERROR ] ", message)
+}
