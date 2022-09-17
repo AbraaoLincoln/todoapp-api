@@ -6,6 +6,32 @@ import (
 	log "github.com/abraaolincoln/todoapp-api/logger"
 )
 
+func FindAll() ([]domain.Project, error) {
+	projects := []domain.Project{}
+	db := database.GetDatabase()
+
+	resultSet, err := db.Query("SELECT * FROM project")
+
+	if err != nil {
+		log.Error("Counld't do the query")
+		return projects, err
+	}
+
+	for resultSet.Next() {
+		var project domain.Project
+		err := resultSet.Scan(&project.Id, &project.Name, &project.Color, &project.CreateAt, &project.ModifiedAt)
+
+		if err != nil {
+			log.Error("Couldn't scan result set to struct")
+			return projects, err
+		}
+
+		projects = append(projects, project)
+	}
+
+	return projects, nil
+}
+
 func FindById(id string) (domain.Project, error) {
 	var project domain.Project
 	db := database.GetDatabase()
@@ -14,7 +40,7 @@ func FindById(id string) (domain.Project, error) {
 	resultSet, err := db.Query(selectQuery, id)
 
 	if err != nil {
-		log.Error("Counld't do the query")
+		log.Error("Couldn't do the query")
 		return project, err
 	}
 
@@ -22,7 +48,8 @@ func FindById(id string) (domain.Project, error) {
 		err := resultSet.Scan(&project.Id, &project.Name, &project.Color, &project.CreateAt, &project.ModifiedAt)
 
 		if err != nil {
-			log.Error("Couldn't scan result set to sctruc")
+			log.Error("Couldn't scan result set to struct")
+			return project, err
 		}
 	}
 
@@ -31,17 +58,18 @@ func FindById(id string) (domain.Project, error) {
 
 func Save(project domain.Project) error {
 	db := database.GetDatabase()
-	insert, err := db.Prepare("INSERT INTO project (id, name, color, create_at, modified_at) value (?,?,?,?,?)")
+	insert, err := db.Prepare("INSERT INTO project (id, name, color, created_at, modified_at) values (?,?,?,?,?)")
 
 	if err != nil {
-		log.Error("Counld't prepare insert")
+		log.Error(err.Error())
+		log.Error("Couldn't prepare insert")
 		return err
 	}
 
 	_, err = insert.Exec(project.Id, project.Name, project.Color, project.CreateAt, project.ModifiedAt)
 
 	if err != nil {
-		log.Error("Counld't insert project")
+		log.Error("Couldn't insert project")
 		return err
 	}
 
@@ -53,14 +81,14 @@ func DeleteById(projectId string) error {
 	delete, err := db.Prepare("DELETE FROM project WHERE id = ?")
 
 	if err != nil {
-		log.Error("Counld't prepare insert")
+		log.Error("Couldn't prepare insert")
 		return err
 	}
 
 	_, err = delete.Exec(projectId)
 
 	if err != nil {
-		log.Error("Counld't delete project")
+		log.Error("Couldn't delete project")
 		return err
 	}
 

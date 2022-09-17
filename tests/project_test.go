@@ -71,3 +71,8 @@ func TestFindProjectByIdProject(t *testing.T) {
 		t.Error("Expecting project create be equal to project got from database")
 	}
 }
+
+// TOOD:
+// test findAll
+// test update
+// test delete
