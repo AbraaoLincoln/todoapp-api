@@ -21,8 +21,17 @@ func (t *Tree) Insert(path string, handler func(w http.ResponseWriter, r *http.R
 			continue
 		}
 
-		if isEndpoint(index, len(splitPath)) && hasTheSameValueAsTheCurrentNode(value, currentNode.value) {
-			updateNodeHandler(handler, currentNode)
+		if isEndpoint(index, len(splitPath)) {
+			if hasTheSameValueAsTheCurrentNode(value, currentNode.value) {
+				updateNodeHandler(handler, currentNode)
+			} else {
+				if currentNode.hasChild(value) {
+					currentNode = currentNode.getChild(value)
+					updateNodeHandler(handler, currentNode)
+				} else {
+					currentNode.addChild(value, NewNodeWith(value, handler))
+				}
+			}
 			break
 		}
 
@@ -31,7 +40,7 @@ func (t *Tree) Insert(path string, handler func(w http.ResponseWriter, r *http.R
 			continue
 		}
 
-		newNode := NewNodeWith(value, handler)
+		newNode := NewNodeWith(value, nil)
 		currentNode.addChild(value, newNode)
 		currentNode = newNode
 	}
