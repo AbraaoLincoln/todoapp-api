@@ -7,7 +7,7 @@ import (
 )
 
 func FindAll() ([]domain.Project, error) {
-	projects := []domain.Project{}
+	var projects []domain.Project
 	db := database.GetDatabase()
 
 	resultSet, err := db.Query("SELECT * FROM project")
@@ -76,21 +76,26 @@ func Save(project domain.Project) error {
 	return nil
 }
 
-func DeleteById(projectId string) error {
+func DeleteById(projectId string) (bool, error) {
 	db := database.GetDatabase()
 	delete, err := db.Prepare("DELETE FROM project WHERE id = ?")
 
 	if err != nil {
 		log.Error("Couldn't prepare insert")
-		return err
+		return false, err
 	}
 
-	_, err = delete.Exec(projectId)
+	result, err := delete.Exec(projectId)
 
 	if err != nil {
 		log.Error("Couldn't delete project")
-		return err
+		return false, err
 	}
 
-	return nil
+	rowsAffect, _ := result.RowsAffected()
+	if rowsAffect == 1 {
+		return true, nil
+	}
+
+	return false, nil
 }

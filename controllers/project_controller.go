@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/abraaolincoln/todoapp-api/domain"
 	log "github.com/abraaolincoln/todoapp-api/logger"
 	projectRepository "github.com/abraaolincoln/todoapp-api/repository/project"
@@ -11,10 +10,14 @@ import (
 )
 
 func RegisterProjectController(rm *router.RestMux) {
-	rm.Post("/project", saveNewProject)
-	rm.Get("/project/:id", findProjectById)
-	rm.Get("/project", findAllProject)
+	rm.Post("/projects", saveNewProject)
+	rm.Get("/projects/:id", findProjectById)
+	rm.Get("/projects/", findAllProject)
+	rm.Delete("/projects/:id", deleteProjectById)
 }
+
+const ContentType = "Content-type"
+const ApplicationJon = "application/json"
 
 func saveNewProject(w http.ResponseWriter, r *http.Request, extraInfo *router.ExtraInfo) {
 	var newProject domain.Project
@@ -23,27 +26,30 @@ func saveNewProject(w http.ResponseWriter, r *http.Request, extraInfo *router.Ex
 	err := validateProject(&newProject)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	err = projectRepository.Save(newProject)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 }
 
 func validateProject(project *domain.Project) error {
-	fmt.Println(project.Id)
-	fmt.Println(project.Name)
-	fmt.Println(project.Color)
-	fmt.Println(project.CreateAt)
-	fmt.Println(project.ModifiedAt)
+	//fmt.Println(project.Id)
+	//fmt.Println(project.Name)
+	//fmt.Println(project.Color)
+	//fmt.Println(project.CreateAt)
+	//fmt.Println(project.ModifiedAt)
 
 	return nil
 }
 
 func findProjectById(w http.ResponseWriter, r *http.Request, extraInfo *router.ExtraInfo) {
+	w.Header().Set(ContentType, ApplicationJon)
 	projectId := extraInfo.PathVariables[":id"]
 	project, err := projectRepository.FindById(projectId)
 
@@ -65,6 +71,7 @@ func findProjectById(w http.ResponseWriter, r *http.Request, extraInfo *router.E
 }
 
 func findAllProject(w http.ResponseWriter, r *http.Request, extraInfo *router.ExtraInfo) {
+	w.Header().Set(ContentType, ApplicationJon)
 	project, err := projectRepository.FindAll()
 
 	if err != nil {
@@ -74,4 +81,24 @@ func findAllProject(w http.ResponseWriter, r *http.Request, extraInfo *router.Ex
 	}
 
 	err = util.PutResultOnResponse(w, &project)
+}
+
+func deleteProjectById(w http.ResponseWriter, r *http.Request, extraInfo *router.ExtraInfo) {
+	w.Header().Set(ContentType, ApplicationJon)
+	projectId := extraInfo.PathVariables[":id"]
+	projectWasDeleted, err := projectRepository.DeleteById(projectId)
+
+	if err != nil {
+		log.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if projectWasDeleted {
+		log.Info("Project with id " + projectId + " was deleted")
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		log.Info("Unable to delete project with id " + projectId)
+		w.WriteHeader(http.StatusBadRequest)
+	}
 }
