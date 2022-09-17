@@ -7,6 +7,10 @@ import (
 
 func main() {
 	log.Info("Starting todoapp api...")
+	startDatabase()
+}
+
+func startDatabase() {
 	database.Connect()
 	database.Migrate()
 }
